@@ -3,7 +3,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import matplotlib.pyplot as plt
 
 def ScaleData(df,mode='Standard'):
-    ''''Function that scales entire dataset using the technique described in the mode variable. Currently supports
+    '''Function that scales entire dataset using the technique described in the mode variable. Currently supports
     MinMax and Standard scaling
     ==============================================================================================================
     Inputs:
@@ -135,7 +135,7 @@ def FindMostImportantFeature(df,loadings_array,pc_num):
 
     return important_feature
 
-def plot_pc_loadings(pca,loadings_array,x_pc, y_pc):
+def plot_pc_loadings(df,pca,loadings_array,x_pc, y_pc):
     ''''Function that plots the loading scores of the different features for two different principal components
     x_pc and y_pc. Also plots the line y=x for clarity.
     ==============================================================================================================
@@ -168,7 +168,7 @@ def plot_pc_loadings(pca,loadings_array,x_pc, y_pc):
     plt.plot([0, 0], [-1, 1], linestyle=':', c='grey', alpha=0.5)
 
     # Adds the name of the feature to every respective datapoint in the scatterplot
-    for i, label in enumerate(df_pca.columns):
+    for i, label in enumerate(df.columns):
         plt.text(list(loadings_array[:, x_pc - 1])[i] + 0.0045, list(loadings_array[:, y_pc - 1])[i], label, fontsize=8,
                  ha='right')
 
@@ -188,21 +188,32 @@ def plot_pc_loadings(pca,loadings_array,x_pc, y_pc):
     plt.title('Loadings of different electrodes for PC' + str(x_pc) + ' and PC' + str(y_pc), fontsize=28)
 
 
-def Create_pc_plot(pcx, pcy, saveIMG=False, Filename='plot.png'):
+def Create_pc_plot(pca, pcx, pcy, score_df,test_df,color_codes = {0:'red',1:'green'},
+                   label_codes= {0:'No inhibition',1:'Inhibition'}, saveIMG=False, Filename='plot.png'):
     ''''Function that plots the scores of two different principal components on the x and y axis. Two plots are
     generated, the first one depicting PKM2 inhibition and the second one depciting ERK2 inhibition through the
     collor of the points in the scatterplot.
     ==============================================================================================================
     Inputs:
-    pcx         principal component to be used on the x-axis.
-    pcy         principal component to be used on the y-axis
-    saveIMG     Boolean variable that states if plot should be saved as image file. Default is False.
-    Filename    Specific filename under which image will be saved. Default is plot.png
+    pca             Pca object fitted to input dataframe
+    pcx             Principal component to be used on the x-axis.
+    pcy             Principal component to be used on the y-axis
+    score_df        Dataframe that contains all the scores of fitted pca object
+    test_df         Dataframe that contains SMILE strings and a binary value depicting wether or not
+                    they inhibit ERK2 and PKM2
+    color_codes     Dictionary that contains the assigned color for the encountered binary value.
+                    default: {0:'red',1:'green'}
+    label_codes     Dictionary that contains the assigned legend label for the encountered inhibition values.
+                    default: {0:'No inhibition',1:'Inhibition'}
+    saveIMG         Boolean variable that states if plot should be saved as image file. Default is False.
+    Filename        Specific filename under which image will be saved. Default is plot.png
 
     Outputs:
-    None
+    None, generates a plot.
     '''
     fig, ax = plt.subplots(1, 2, figsize=(24, 8))
+
+    explained_variance = pca.explained_variance_ratio_
 
     # Create empty lists to be filled later (used for custom legend)
     Datapoints = []
@@ -210,16 +221,16 @@ def Create_pc_plot(pcx, pcy, saveIMG=False, Filename='plot.png'):
     seen_labels = []
 
     # Looks through every datapoint in the scores column of PC1 and PC2, and assigns a custom color based on finger.
-    for data_ist in range(len(Score_df[:, 0])):
-        Datapoint = ax[0].scatter(Score_df[data_ist, (pcx - 1)], Score_df[data_ist, (pcy - 1)], alpha=0.7,
-                                  c=ColorCodes[tested['PKM2_inhibition'][data_ist]],
-                                  label=Labels[tested['PKM2_inhibition'][data_ist]])
+    for data_ist in range(len(score_df[:, 0])):
+        Datapoint = ax[0].scatter(score_df[data_ist, (pcx - 1)], score_df[data_ist, (pcy - 1)], alpha=0.7,
+                                  c=color_codes[test_df['PKM2_inhibition'][data_ist]],
+                                  label=label_codes[test_df['PKM2_inhibition'][data_ist]])
 
         # Checks if the finger is already described by the legend, if not it adds it to the necessary lists.
-        if Labels[tested['PKM2_inhibition'][data_ist]] not in seen_labels:
+        if label_codes[test_df['PKM2_inhibition'][data_ist]] not in seen_labels:
             Datapoints.append(Datapoint)
-            labels.append(Labels[tested['PKM2_inhibition'][data_ist]])
-            seen_labels.append(Labels[tested['PKM2_inhibition'][data_ist]])
+            labels.append(label_codes[test_df['PKM2_inhibition'][data_ist]])
+            seen_labels.append(label_codes[test_df['PKM2_inhibition'][data_ist]])
 
     # Creates legend using earlier made lists
     ax[0].legend(Datapoints, labels, title='Inhibition for PKM2')
@@ -238,16 +249,16 @@ def Create_pc_plot(pcx, pcy, saveIMG=False, Filename='plot.png'):
     seen_labels = []
 
     # Looks through every datapoint in the scores column of PC1 and PC2, and assigns a custom color based on finger.
-    for data_ist in range(len(Score_df[:, 0])):
-        Datapoint = ax[1].scatter(Score_df[data_ist, (pcx - 1)], Score_df[data_ist, (pcy - 1)], alpha=0.7,
-                                  c=ColorCodes[tested['ERK2_inhibition'][data_ist]],
-                                  label=Labels[tested['ERK2_inhibition'][data_ist]])
+    for data_ist in range(len(score_df[:, 0])):
+        Datapoint = ax[1].scatter(score_df[data_ist, (pcx - 1)], score_df[data_ist, (pcy - 1)], alpha=0.7,
+                                  c=color_codes[test_df['ERK2_inhibition'][data_ist]],
+                                  label=label_codes[test_df['ERK2_inhibition'][data_ist]])
 
         # Checks if the finger is already described by the legend, if not it adds it to the necessary lists.
-        if Labels[tested['ERK2_inhibition'][data_ist]] not in seen_labels:
+        if label_codes[test_df['ERK2_inhibition'][data_ist]] not in seen_labels:
             Datapoints.append(Datapoint)
-            labels.append(Labels[tested['ERK2_inhibition'][data_ist]])
-            seen_labels.append(Labels[tested['ERK2_inhibition'][data_ist]])
+            labels.append(label_codes[test_df['ERK2_inhibition'][data_ist]])
+            seen_labels.append(label_codes[test_df['ERK2_inhibition'][data_ist]])
 
     # Creates legend using earlier made lists
     ax[1].legend(Datapoints, labels, title='Inhibition for ERK2')
