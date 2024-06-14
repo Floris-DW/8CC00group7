@@ -6,6 +6,7 @@ import rdkit
 import notebook
 import tensorflow
 import tensorflow.keras as keras
+import seaborn
 
 print("numpy", numpy.__version__, numpy.__version__ == "1.26.4")
 print("pandas", pandas.__version__, pandas.__version__ == "2.2.2")
