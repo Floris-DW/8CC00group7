@@ -8,10 +8,12 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import AllChem
 from rdkit.Chem import MACCSkeys
+from rdkit.Chem import rdMolDescriptors
 from rdkit.ML.Descriptors import MoleculeDescriptors
 
 
 def calculate_descriptors(df: pd.DataFrame) -> Tuple[pd.DataFrame,
+                                                     pd.DataFrame,
                                                      pd.DataFrame,
                                                      pd.DataFrame]:
     mols = [Chem.MolFromSmiles(smi) for smi in df['SMILES']]
@@ -49,22 +51,29 @@ def calculate_descriptors(df: pd.DataFrame) -> Tuple[pd.DataFrame,
     maccs = pd.DataFrame(data=maccs_keys, columns=col_name)
                          #index=df['SMILES'])
 
-    return desc_2d, fprint, maccs
+    # Calculate Molecular Quantum Numbers (MQN)
+    mqn_ds = [rdMolDescriptors.MQNs_(m) for m in mols]
+    col_name = [f'mqn_{i}' for i in range(1, len(mqn_ds[0]) + 1)]
+    mqn = pd.DataFrame(data=mqn_ds, columns=col_name)
+
+    return desc_2d, fprint, maccs, mqn
 
 
 def descriptors_to_csv(desc: Tuple[pd.DataFrame, pd.DataFrame,
-                                   pd.DataFrame], merged=True):
+                                   pd.DataFrame, pd.DataFrame],
+                       merged=True):
     """Write descriptors to a .csv file. Writes merged descriptors to 
     one file in case merged=True; else it writes one file per
     descriptor type or three* files in total."""  # *for now
     os.makedirs('data/', exist_ok=True)
     if merged:
-        merged_desc = pd.concat([desc[0], desc[1], desc[2]], axis=1)
+        merged_desc = pd.concat([desc[0], desc[1], desc[2], desc[3]],
+                                axis=1)
         merged_desc.to_csv('data/all_descriptors.csv',
                            index=False)
     else:
         names = ["2d_descriptors.csv", "fprint_descriptors.csv",
-                 "maccs_descriptors.csv"]
+                 "maccs_descriptors.csv", "mqn_descriptors.csv"]
         for i in range(len(desc)):
             desc[i].to_csv(f'data/{names[i]}', index=False)
     merge_text = "merged" if merged else "separate"
@@ -96,7 +105,7 @@ def descriptors_from_csv(merged=True) -> List[pd.DataFrame]:
             return desc
     else:
         names = ["2d_descriptors", "fprint_descriptors",
-                 "maccs_descriptors"]
+                 "maccs_descriptors", "mqn_descriptors.csv"]
         for i in range(0, 3):  # three for now
             if os.path.exists(f'data/{names[i]}.csv'):
                 desc.append(pd.read_csv(f'data/{names[i]}.csv'))
