@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def ScaleData(df,mode='Standard'):
     '''Function that scales entire dataset using the technique described in the mode variable. Currently supports
@@ -15,9 +16,9 @@ def ScaleData(df,mode='Standard'):
 
 
     if mode == 'MinMax':
-        scaled_df = MinMaxScaler().fit_transform(df)  # Scaling data using MinMax scaling
+        scaled_df = pd.DataFrame(MinMaxScaler().fit_transform(df))  # Scaling data using MinMax scaling
     if mode == 'Standard':
-        scaled_df = StandardScaler().fit_transform(df)  # Scaling data using standard scaling
+        scaled_df = pd.DataFrame(StandardScaler().fit_transform(df))  # Scaling data using standard scaling
 
     return scaled_df
 
@@ -33,16 +34,16 @@ def print_explained_var(pca,maxpc=None):
     None
     '''
 
-    assert maxpc <= pca.n_components_, f'Amount of printed principal components exceeds maximum amount: {maxpc}!'
-
     if maxpc is None:
         maxpc = pca.n_components_
+
+    assert maxpc <= pca.n_components_, f'Amount of printed principal components exceeds maximum amount: {maxpc}!'
 
     explained_variance = pca.explained_variance_ratio_
 
     for num, explained_var in enumerate(explained_variance[0:maxpc]):
-        print('Principal component', num + 1, 'Explains', explained_var * 100, '% of all variance')
-        print('The total amount of explained variance for', num + 1, 'Principal components equals', np.cumsum(explained_variance)[num] * 100, '%')
+        print('Principal component', str(num + 1), 'Explains', explained_var * 100, '% of all variance')
+        print('The total amount of explained variance for', str(num + 1), 'Principal components equals', str(np.cumsum(explained_variance)[num] * 100), '%')
 
 
 def plot_explained_var(pca,maxpc=None):
@@ -57,10 +58,10 @@ def plot_explained_var(pca,maxpc=None):
     None
     '''
 
-    assert maxpc <= pca.n_components_, f'Amount of printed principal components exceeds maximum amount: {maxpc}!'
-
     if maxpc is None:
         maxpc = pca.n_components_
+
+    assert maxpc <= pca.n_components_, f'Amount of printed principal components exceeds maximum amount: {maxpc}!'
 
     explained_variance = pca.explained_variance_ratio_
 
@@ -108,12 +109,12 @@ def compute_loadings(pca):
     return loadings_array
 
 
-def FindMostImportantFeature(df,loadings_array,pc_num):
+def FindMostImportantFeature(test_df,loadings_array,pc_num):
     ''''Function that finds the most important feature of a given principal component. Returns most important
     feature as a string variable.
     ==============================================================================================================
     Inputs:
-    df                  Dataframe used in PCA
+    test_df             Dataframe containing test data
     loadings_array      Array that contains all loading scores
     pc_num              Number of the principal component you want to analyse
 
@@ -129,17 +130,22 @@ def FindMostImportantFeature(df,loadings_array,pc_num):
     # Find the index of this highest loading score.
     Max_loadingscore_index = list(PCA_col_abs).index(MaxVal)
 
-    important_feature = df.columns[Max_loadingscore_index]
+    print([*test_df])
+
+    important_feature = [*test_df][Max_loadingscore_index]
+
+    print(important_feature)
 
     print('The feature that has the highest absolute loading value for PC ' + str(pc_num) + ' is ' +important_feature , 'At loading score:', MaxVal)
 
     return important_feature
 
-def plot_pc_loadings(df,pca,loadings_array,x_pc, y_pc):
+def plot_pc_loadings(test_df,pca,loadings_array,x_pc, y_pc):
     ''''Function that plots the loading scores of the different features for two different principal components
     x_pc and y_pc. Also plots the line y=x for clarity.
     ==============================================================================================================
     Inputs:
+    test_df             Dataframe that contains all test data
     pca                 pca object fitted to the used dataset.
     loadings_array      Array that contains all loading scores.
     x_pc, y_pc          Two integer variables that represent the principal component used as the x axis
@@ -168,7 +174,7 @@ def plot_pc_loadings(df,pca,loadings_array,x_pc, y_pc):
     plt.plot([0, 0], [-1, 1], linestyle=':', c='grey', alpha=0.5)
 
     # Adds the name of the feature to every respective datapoint in the scatterplot
-    for i, label in enumerate(df.columns):
+    for i, label in enumerate([*test_df]):
         plt.text(list(loadings_array[:, x_pc - 1])[i] + 0.0045, list(loadings_array[:, y_pc - 1])[i], label, fontsize=8,
                  ha='right')
 
