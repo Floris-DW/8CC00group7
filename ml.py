@@ -125,13 +125,21 @@ def create_mlp_model(input_dim, dropout_rate=0.25, init_mode='uniform'):
 
 if __name__ == '__main__':
     data = pd.read_csv("data/tested_molecules.csv")
-    desc_2d = pd.read_csv("data/cleaned_2d_descriptors.csv").drop(columns=['SMILES'], axis=1)
+    desc_2d = pd.read_csv("data/cleaned_2d_descriptors.csv")
+    desc_2d.drop(desc_2d.columns[0], axis='columns', inplace=True)
     desc_2d = pd.DataFrame(MinMaxScaler().fit_transform(desc_2d), columns = desc_2d.columns)
-    desc_fprint = pd.read_csv("data/cleaned_fingerprints.csv").drop(columns=['SMILES'], axis=1)
-    desc_maccs = pd.read_csv("data/cleaned_maccs_keys.csv").drop(columns=['SMILES'], axis=1)
-    desc_mqn = pd.read_csv("data/cleaned_mqn.csv").drop(columns=['SMILES'], axis=1)
+    
+    desc_fprint = pd.read_csv("data/cleaned_fingerprints.csv")
+    desc_fprint.drop(desc_fprint.columns[0], axis='columns', inplace=True)
+    
+    desc_maccs = pd.read_csv("data/cleaned_maccs_keys.csv")
+    desc_maccs.drop(desc_maccs.columns[0], axis='columns', inplace=True)
+    
+    desc_mqn = pd.read_csv("data/cleaned_mqn.csv")
+    desc_mqn.drop(desc_mqn.columns[0], axis='columns', inplace=True)
     desc_mqn = pd.DataFrame(MinMaxScaler().fit_transform(desc_mqn),
                             columns=desc_mqn.columns)
+    
     desc_fprint_counts = pd.read_csv("data/cleaned_fprint_count.csv")
     desc_fprint_counts = pd.DataFrame(MinMaxScaler().fit_transform(
         desc_fprint_counts), columns=desc_fprint_counts.columns)
@@ -145,7 +153,7 @@ if __name__ == '__main__':
     use_ind_test = False  # Whether you want to use independent test set
     use_k_fold = True  # Whether you want to use k-fold cross-validation
     use_PCA = True
-    m_type = "RF"  # model type: "RF" or "LR"
+    m_type = "NN"  # model type: "RF" or "LR"
 
     r_state = 7  # Random state for an attempt at reproducibility of results
     test_size = 0.2  # Size of test set when not using k-fold

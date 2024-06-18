@@ -63,7 +63,7 @@ pca_maccs = pd.read_csv("data/pca_maccs.csv")
 pca_mqn = pd.read_csv("data/pca_mqn.csv")
 
 
-df_final = pd.concat([pca_mqn], axis='columns')
+df_final = df_mqn.drop(df_mqn.columns[0], axis='columns')
 # df_final.drop('SMILES', axis='columns', inplace=True)
 df_final = pd.DataFrame(MinMaxScaler().fit_transform(df_final), columns=df_final.columns)
 
@@ -76,10 +76,15 @@ X_train_PKM2, X_test_PKM2, y_train_PKM2, y_test_PKM2 = train_test_split(df_final
 X_train_ERK2, X_test_ERK2, y_train_ERK2, y_test_ERK2 = train_test_split(df_final, y_ERK2, 
                                                             test_size=0.2, stratify=y_ERK2)
 
+# just duplicate
 X_train_ERK2 = pd.concat([X_train_ERK2[y_train_ERK2==1], X_train_ERK2])
 y_train_ERK2 = pd.concat([y_train_ERK2[y_train_ERK2==1], y_train_ERK2])
 
+X_train_PKM2 = pd.concat([X_train_PKM2[y_train_PKM2==1], X_train_PKM2])
+y_train_PKM2 = pd.concat([y_train_PKM2[y_train_PKM2==1], y_train_PKM2])
 
+
+# smote and duplicate
 # smote = SMOTE(random_state=69, sampling_strategy=0.1)
 
 # X_train_ERK2_smote, y_train_ERK2_smote = smote.fit_resample(X_train_ERK2, y_train_ERK2)
@@ -116,7 +121,7 @@ def create_mlp_model(input_dim, dropout_rate=0.25, init_mode='uniform'):
 input_dim = X_train_ERK2.shape[1]
 model = KerasClassifier(build_fn=create_mlp_model, input_dim=input_dim, verbose=1, 
                         dropout_rate = [0.2, 0.3, 0.4], batch_size = [32, 64], 
-                        init_mode = ['he_normal', 'lecun_uniform'])
+                        init_mode = ['he_normal'])#, 'lecun_uniform'])
 
 
 batch_size = [32, 64]
@@ -141,16 +146,60 @@ grid_result = grid.fit(X_train_ERK2, y_train_ERK2, class_weight=class_weight_dic
 best_model = grid_result.best_estimator_.model_
 best_params = grid_result.best_params_
 
-# best_model.save('saved models/NN_mqn_1.keras')
-# loaded_model = load_model('saved models/NN_mqn_1.keras')
+# best_model.save('saved models/NN_mqn_2.keras')
+loaded_model = load_model('saved models/NN_mqn_2.keras')
+y_pred_ERK2 = (loaded_model.predict(X_test_ERK2) > 0.5).astype("int32")
 
-y_pred_ERK2 = (best_model.predict(X_test_ERK2) > 0.5).astype("int32")
+
+# y_pred_ERK2 = (best_model.predict(X_test_ERK2) > 0.5).astype("int32")
 evaluate(y_test_ERK2, y_pred_ERK2, best_params)
 
 
 # y_pred_ERK2 = (best_model.predict(X_train_ERK2) > 0.5).astype("int32")
 # evaluate(y_train_ERK2, y_pred_ERK2, best_params)
 
+
+
+################################################################################################
+
+
+input_dim = X_train_PKM2.shape[1]
+model = KerasClassifier(build_fn=create_mlp_model, input_dim=input_dim, verbose=1, 
+                        dropout_rate = [0.2, 0.3, 0.4], batch_size = [32, 64], 
+                        init_mode = ['he_normal'])#, 'lecun_uniform'])
+
+
+batch_size = [32, 64]
+dropout_rate = [0.2, 0.3, 0.4]
+init_mode = ['he_normal']#, 'glorot_uniform', 'lecun_uniform']
+param_grid = dict(batch_size=batch_size, dropout_rate=dropout_rate, init_mode=init_mode)
+
+class_weights = compute_class_weight(class_weight='balanced', 
+                                     classes=np.array([0, 1]), y=y_train_PKM2)                       
+class_weight_dict = {0: class_weights[0], 1: class_weights[1]}  
+
+
+kfold = StratifiedKFold(n_splits=4, shuffle=True, random_state=69)
+
+scorer = make_scorer(f1_score)
+
+grid = GridSearchCV(estimator=model, param_grid=param_grid, cv=kfold, scoring=scorer)
+
+grid_result = grid.fit(X_train_ERK2, y_train_ERK2, class_weight=class_weight_dict, 
+                       callbacks=[EarlyStopping(monitor='val_loss', patience=3)])
+
+best_model = grid_result.best_estimator_.model_
+best_params = grid_result.best_params_
+
+# best_model.save('saved models/NN_mqn_1.keras')
+# loaded_model = load_model('saved models/NN_mqn_1.keras')
+
+y_pred_PKM2 = (best_model.predict(X_test_PKM2) > 0.5).astype("int32")
+evaluate(y_test_PKM2, y_pred_PKM2, best_params)
+
+
+# y_pred_PKM2 = (best_model.predict(X_train_PKM2) > 0.5).astype("int32")
+# evaluate(y_train_PKM2, y_pred_PKM2, best_params)
 
 
 
@@ -191,45 +240,6 @@ evaluate(y_test_ERK2, y_pred_ERK2, best_params)
 
 y_pred_ERK2 = (best_rf.predict(X_train_ERK2))
 evaluate(y_train_ERK2, y_pred_ERK2, best_params)
-
-
-################################################################################################
-
-
-kfold = StratifiedKFold(n_splits=4, shuffle=True, random_state=69)
-
-scorer = make_scorer(balanced_accuracy_score)
-
-param_grid = {'n_estimators': [50, 100, 200],
-              'max_features': [100, 'sqrt', 'log2'],
-              'max_depth': [2, 5, 10, 20],
-              'min_samples_split': [2],
-              'min_samples_leaf': [1]}
-
-rf = BalancedRandomForestClassifier(random_state=69, bootstrap=True, 
-                                    replacement=True, sampling_strategy='all')
-
-
-
-grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, scoring=scorer, 
-                           cv=kfold, n_jobs=-1, verbose=0)
-
-grid_search.fit(X_train_ERK2, y_train_ERK2)
-
-best_rf = grid_search.best_estimator_
-best_params = grid_search.best_params_
-
-
-y_pred_ERK2 = best_rf.predict(X_test_ERK2)        
-evaluate(y_test_ERK2, y_pred_ERK2, best_params)
-
-
-
-y_pred_ERK2 = (best_rf.predict(X_train_ERK2))
-evaluate(y_train_ERK2, y_pred_ERK2, best_params)
-
-
-
 
 ################################################################################################
 
