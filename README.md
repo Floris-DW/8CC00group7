@@ -53,9 +53,9 @@ To execute the machine learning parts of this project, the following files can b
     - Different code sections can be run independently and are visually separated with comments.
 
 Auxiliary functions:
-    - check_reqs.py: Run to verify your installation of the packages.
-    - utils.py: Some utility functions to calculate, save, and load descriptors.
-    - collab_code.ipynb: Some code to allow us to train models using Google Colab.
+- check_reqs.py: Run to verify your installation of the packages.
+- utils.py: Some utility functions to calculate, save, and load descriptors.
+- collab_code.ipynb: Some code to allow us to train models using Google Colab.
 
 ### Authors
 Benjamin Becht,
