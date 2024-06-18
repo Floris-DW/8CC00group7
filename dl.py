@@ -23,9 +23,14 @@ from sklearn.ensemble import RandomForestClassifier
 from imblearn.ensemble import BalancedRandomForestClassifier
 
 
-
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
 
 def evaluate(y_test, y_pred, best_params):
+    
+    
 
     cm = confusion_matrix(y_test, y_pred)
     accuracy = accuracy_score(y_test, y_pred)
@@ -45,6 +50,21 @@ def evaluate(y_test, y_pred, best_params):
     print(f"Recall: {recall}")
     print(f"Specificity: {specificity}")
     print(f"F1 Score: {f1}")
+def create_mlp_model(input_dim, dropout_rate=0.25, init_mode='uniform'):
+    model = Sequential()
+    model.add(Dense(128, input_dim=input_dim, activation='relu', kernel_initializer=init_mode))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(64, activation='relu', kernel_initializer=init_mode))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(32, activation='relu', kernel_initializer=init_mode))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(16, activation='relu', kernel_initializer=init_mode))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(1, activation='sigmoid'))
+    
+    model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['f1_score'])
+    return model
+
 
 
 data = pd.read_csv("data/tested_molecules.csv")
@@ -64,24 +84,20 @@ pca_mqn = pd.read_csv("data/pca_mqn.csv")
 
 
 df_final = df_mqn.drop(df_mqn.columns[0], axis='columns')
-# df_final.drop('SMILES', axis='columns', inplace=True)
-df_final = pd.DataFrame(MinMaxScaler().fit_transform(df_final), columns=df_final.columns)
 
 
 #######################################################################################################
 
-X_train_PKM2, X_test_PKM2, y_train_PKM2, y_test_PKM2 = train_test_split(df_final, y_PKM2,
-                                                            test_size=0.2, stratify=y_PKM2)
-
 X_train_ERK2, X_test_ERK2, y_train_ERK2, y_test_ERK2 = train_test_split(df_final, y_ERK2, 
-                                                            test_size=0.2, stratify=y_ERK2)
+                                            test_size=0.2, stratify=y_ERK2, random_state=86)
 
+
+    
 # just duplicate
 X_train_ERK2 = pd.concat([X_train_ERK2[y_train_ERK2==1], X_train_ERK2])
 y_train_ERK2 = pd.concat([y_train_ERK2[y_train_ERK2==1], y_train_ERK2])
 
-X_train_PKM2 = pd.concat([X_train_PKM2[y_train_PKM2==1], X_train_PKM2])
-y_train_PKM2 = pd.concat([y_train_PKM2[y_train_PKM2==1], y_train_PKM2])
+
 
 
 # smote and duplicate
@@ -90,32 +106,50 @@ y_train_PKM2 = pd.concat([y_train_PKM2[y_train_PKM2==1], y_train_PKM2])
 # X_train_ERK2_smote, y_train_ERK2_smote = smote.fit_resample(X_train_ERK2, y_train_ERK2)
 # X_train_ERK2_smote = pd.concat([X_train_ERK2[y_train_ERK2==1], X_train_ERK2_smote])
 # y_train_ERK2_smote = pd.concat([y_train_ERK2[y_train_ERK2==1], y_train_ERK2_smote])
-
-
-# X_train_PKM2_smote, y_train_PKM2_smote = smote.fit_resample(X_train_PKM2, y_train_PKM2)
-# X_train_PKM2_smote = pd.concat([X_train_PKM2[y_train_PKM2==1], X_train_PKM2_smote])
-# y_train_PKM2_smote = pd.concat([y_train_PKM2[y_train_PKM2==1], y_train_PKM2_smote])
-
-
 # X_train_ERK2, y_train_ERK2 = X_train_ERK2_smote.copy(), y_train_ERK2_smote.copy()
-# X_train_PKM2, y_train_PKM2 = X_train_PKM2_smote.copy(), y_train_PKM2_smote.copy()
 
 
 
-def create_mlp_model(input_dim, dropout_rate=0.25, init_mode='uniform'):
-    model = Sequential()
-    model.add(Dense(128, input_dim=input_dim, activation='relu', kernel_initializer=init_mode))
-    model.add(Dropout(dropout_rate))
-    model.add(Dense(64, activation='relu', kernel_initializer=init_mode))
-    model.add(Dropout(dropout_rate))
-    model.add(Dense(32, activation='relu', kernel_initializer=init_mode))
-    model.add(Dropout(dropout_rate))
-    model.add(Dense(16, activation='relu', kernel_initializer=init_mode))
-    model.add(Dropout(dropout_rate))
-    model.add(Dense(1, activation='sigmoid'))
+
+
+
+# def k_fold_training(x, y, random_state=7, k=4):
+#     acc = [] # balanced accuracies and ROC areas under curve
+#     cv = StratifiedKFold(n_splits=k,
+#                          shuffle=True,
+#                          random_state=random_state)
     
-    model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['f1_score'])
-    return model
+#     best_model, best_acc, best_cm = None, 0, []
+#     for train_i, test_i in cv.split(x, y):
+#         # make the fold train-test splits:
+#         x_train, x_test = x.iloc[train_i, :], x.iloc[test_i, :]
+#         y_tr, y_te = y.iloc[train_i], y.iloc[test_i]
+
+#         # y_te = y_te.values
+    
+#         # input_dim = x.shape[1]
+#         # m = KerasClassifier(build_fn=create_mlp_model, input_dim=input_dim, verbose=1, 
+#         #                         dropout_rate = 0.3, batch_size = 32)
+        
+
+#         m=load_model('saved models/NN_mqn_2.keras')
+        
+#         m.fit(x_train, y_tr)
+        
+#         y_hat = m.predict(x_test)
+#         y_hat= y_hat.round()
+
+#         cur_acc = balanced_accuracy_score(y_te, y_hat)
+#         acc.append(cur_acc)
+
+#         # Store best model based on balanced accuracy:
+#         if cur_acc > best_acc:
+#             best_model, best_acc = m, cur_acc
+#             best_cm = confusion_matrix(y_te.values, y_hat)
+    
+#     return best_model, best_cm, acc
+# k_fold_training(X_train_ERK2, y_train_ERK2, k=4)
+
 
 
 input_dim = X_train_ERK2.shape[1]
@@ -130,7 +164,7 @@ init_mode = ['he_normal']#, 'glorot_uniform', 'lecun_uniform']
 param_grid = dict(batch_size=batch_size, dropout_rate=dropout_rate, init_mode=init_mode)
 
 class_weights = compute_class_weight(class_weight='balanced', 
-                                     classes=np.array([0, 1]), y=y_train_ERK2)                       
+                                      classes=np.array([0, 1]), y=y_train_ERK2)                       
 class_weight_dict = {0: class_weights[0], 1: class_weights[1]}  
 
 
@@ -141,26 +175,50 @@ scorer = make_scorer(f1_score)
 grid = GridSearchCV(estimator=model, param_grid=param_grid, cv=kfold, scoring=scorer)
 
 grid_result = grid.fit(X_train_ERK2, y_train_ERK2, class_weight=class_weight_dict, 
-                       callbacks=[EarlyStopping(monitor='val_loss', patience=3)])
+                        callbacks=[EarlyStopping(monitor='val_loss', patience=3)])
 
 best_model = grid_result.best_estimator_.model_
 best_params = grid_result.best_params_
 
-# best_model.save('saved models/NN_mqn_2.keras')
-loaded_model = load_model('saved models/NN_mqn_2.keras')
-y_pred_ERK2 = (loaded_model.predict(X_test_ERK2) > 0.5).astype("int32")
+# # best_model.save('saved models/NN_mqn_3.keras')
 
+## loaded_model = load_model('saved models/NN_mqn_1.keras')
+## y_pred_ERK2 = (loaded_model.predict(X_test_ERK2) > 0.5).astype("int32")
+# #evaluate(y_test_ERK2, y_pred_ERK2, {})
+    
 
-# y_pred_ERK2 = (best_model.predict(X_test_ERK2) > 0.5).astype("int32")
+y_pred_ERK2 = (best_model.predict(X_test_ERK2) > 0.5).astype("int32")
 evaluate(y_test_ERK2, y_pred_ERK2, best_params)
 
 
-# y_pred_ERK2 = (best_model.predict(X_train_ERK2) > 0.5).astype("int32")
-# evaluate(y_train_ERK2, y_pred_ERK2, best_params)
+# # y_pred_ERK2 = (best_model.predict(X_train_ERK2) > 0.5).astype("int32")
+# # evaluate(y_train_ERK2, y_pred_ERK2, best_params)
+
+
+
+
 
 
 
 ################################################################################################
+
+df_fprints_block = pd.read_csv('data/small_fingerprints.csv')
+df_fprints_block.drop('SMILES', axis='columns', inplace=True)
+df_final = pd.concat([df_fprints_block], 
+                     axis='columns')
+
+X_train_PKM2, X_test_PKM2, y_train_PKM2, y_test_PKM2 = train_test_split(df_final, y_PKM2, 
+                                            test_size=0.2, stratify=y_PKM2, random_state=96)
+
+X_train_PKM2 = pd.concat([X_train_PKM2[y_train_PKM2==1], X_train_PKM2])
+y_train_PKM2 = pd.concat([y_train_PKM2[y_train_PKM2==1], y_train_PKM2])
+
+# X_train_PKM2_smote, y_train_PKM2_smote = smote.fit_resample(X_train_PKM2, y_train_PKM2)
+# X_train_PKM2_smote = pd.concat([X_train_PKM2[y_train_PKM2==1], X_train_PKM2_smote])
+# y_train_PKM2_smote = pd.concat([y_train_PKM2[y_train_PKM2==1], y_train_PKM2_smote])
+# X_train_PKM2, y_train_PKM2 = X_train_PKM2_smote.copy(), y_train_PKM2_smote.copy()
+
+
 
 
 input_dim = X_train_PKM2.shape[1]
@@ -185,14 +243,19 @@ scorer = make_scorer(f1_score)
 
 grid = GridSearchCV(estimator=model, param_grid=param_grid, cv=kfold, scoring=scorer)
 
-grid_result = grid.fit(X_train_ERK2, y_train_ERK2, class_weight=class_weight_dict, 
+grid_result = grid.fit(X_train_PKM2, y_train_PKM2, class_weight=class_weight_dict, 
                        callbacks=[EarlyStopping(monitor='val_loss', patience=3)])
 
 best_model = grid_result.best_estimator_.model_
 best_params = grid_result.best_params_
 
-# best_model.save('saved models/NN_mqn_1.keras')
-# loaded_model = load_model('saved models/NN_mqn_1.keras')
+
+# best_model.save('saved models/NN_mqn+sfprint_3.keras')
+
+# loaded_model = load_model('saved models/NN_mqn_sfprint_1.keras')
+# y_pred_PKM2 = (loaded_model.predict(X_test_PKM2) > 0.5).astype("int32")
+# evaluate(y_test_PKM2, y_pred_PKM2, {})
+
 
 y_pred_PKM2 = (best_model.predict(X_test_PKM2) > 0.5).astype("int32")
 evaluate(y_test_PKM2, y_pred_PKM2, best_params)
@@ -204,42 +267,48 @@ evaluate(y_test_PKM2, y_pred_PKM2, best_params)
 
 
 
+
+
+
+
+
 ################################################################################################
 
-class_weights = compute_class_weight(class_weight='balanced', 
-                                     classes=np.array([0, 1]), y=y_train_ERK2)                       
-class_weight_dict = {0: class_weights[0], 1: class_weights[1]}  
 
-kfold = StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
+# class_weights = compute_class_weight(class_weight='balanced', 
+#                                      classes=np.array([0, 1]), y=y_train_ERK2)                       
+# class_weight_dict = {0: class_weights[0], 1: class_weights[1]}  
 
-scorer = make_scorer(balanced_accuracy_score)
+# kfold = StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
 
-param_grid = {'n_estimators': [50, 100],
-              'max_features': [100, 'sqrt', 'log2'],
-              'max_depth': [2, 5, 10, 20],
-              'min_samples_split': [2],
-              'min_samples_leaf': [1]}
+# scorer = make_scorer(balanced_accuracy_score)
 
-rf = RandomForestClassifier(random_state=69, bootstrap=True, class_weight=class_weight_dict)
+# param_grid = {'n_estimators': [50, 100],
+#               'max_features': [100, 'sqrt', 'log2'],
+#               'max_depth': [2, 5, 10, 20],
+#               'min_samples_split': [2],
+#               'min_samples_leaf': [1]}
 
-
-grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, scoring=scorer, 
-                           cv=kfold, n_jobs=-1, verbose=0)
-
-grid_search.fit(X_train_ERK2, y_train_ERK2)
-
-best_rf = grid_search.best_estimator_
-best_params = grid_search.best_params_
+# rf = RandomForestClassifier(random_state=69, bootstrap=True, class_weight=class_weight_dict)
 
 
-y_pred_ERK2 = best_rf.predict(X_test_ERK2)        
-evaluate(y_test_ERK2, y_pred_ERK2, best_params)
+# grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, scoring=scorer, 
+#                            cv=kfold, n_jobs=-1, verbose=0)
+
+# grid_search.fit(X_train_ERK2, y_train_ERK2)
+
+# best_rf = grid_search.best_estimator_
+# best_params = grid_search.best_params_
+
+
+# y_pred_ERK2 = best_rf.predict(X_test_ERK2)        
+# evaluate(y_test_ERK2, y_pred_ERK2, best_params)
 
 
 
 
-y_pred_ERK2 = (best_rf.predict(X_train_ERK2))
-evaluate(y_train_ERK2, y_pred_ERK2, best_params)
+# y_pred_ERK2 = (best_rf.predict(X_train_ERK2))
+# evaluate(y_train_ERK2, y_pred_ERK2, best_params)
 
 ################################################################################################
 
