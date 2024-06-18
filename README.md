@@ -11,17 +11,17 @@ cd 8CC00group7
 pip install -r requirements.txt
 
 ### Required packages
-numpy == 1.26.4
-pandas == 2.2.2
-matplotlib == 3.9.0
-scikit-learn == 1.5.0
-jupyter == 1.0.0
-notebook == 7.2.0
-rdkit == 2023.9.6
-tensorflow == 2.16.1
-scipy == 1.13.1
-imblearn == 0.0
-scikeras == 0.13.0
+- numpy == 1.26.4
+- pandas == 2.2.2
+- matplotlib == 3.9.0
+- scikit-learn == 1.5.0
+- jupyter == 1.0.0
+- notebook == 7.2.0
+- rdkit == 2023.9.6
+- tensorflow == 2.16.1
+- scipy == 1.13.1
+- imblearn == 0.0
+- scikeras == 0.13.0
 
 ## Usage
 To execute the EDA & Preprocessing notebook the following file is required:
@@ -45,6 +45,17 @@ To execute the PCA Analysis notebook the following files are required:
     Consist of:
         1. SMILE (string)
         2. Bits (binary)
+
+To execute the machine learning parts of this project, the following files can be run:
+- ml.py: An all-encompassing trainer and evaluator with high customizability.
+    - Descriptor combinations, usage of PCA features, model type, usage of nested-k-fold cross-validation, and the usage of an independent-test-set outside of cross-validation are all options which can  be       customized by the user under the commented heading "CUSTOMIZE:".
+- dl.py: Neural network trainer and evaluator code.
+    - Different code sections can be run independently and are visually separated with comments.
+
+Auxiliary functions:
+    - check_reqs.py: Run to verify your installation of the packages.
+    - utils.py: Some utility functions to calculate, save, and load descriptors.
+    - collab_code.ipynb: Some code to allow us to train models using Google Colab.
 
 ### Authors
 Benjamin Becht,
