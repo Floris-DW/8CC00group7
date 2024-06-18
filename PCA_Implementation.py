@@ -16,9 +16,9 @@ def ScaleData(df,mode='Standard'):
 
 
     if mode == 'MinMax':
-        scaled_df = pd.DataFrame(MinMaxScaler().fit_transform(df))  # Scaling data using MinMax scaling
+        scaled_df = pd.DataFrame(MinMaxScaler().fit_transform(df),columns=df.columns)  # Scaling data using MinMax scaling
     if mode == 'Standard':
-        scaled_df = pd.DataFrame(StandardScaler().fit_transform(df))  # Scaling data using standard scaling
+        scaled_df = pd.DataFrame(StandardScaler().fit_transform(df),columns=df.columns)  # Scaling data using standard scaling
 
     return scaled_df
 
