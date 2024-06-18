@@ -30,7 +30,8 @@ Usage
         1. SMILES (string)
         2. PKM2_inhibition (binary, inhibition = 1, no_inhibition = 0)
         3. ERK2_inhibition (binary, inhibition = 1, no_inhibition = 0)
-
+    The data is first preprocessed te be used in training, as is detailed inside the Notebook. Thereafter, the untested molecule data will be prepared similarly, to allow for the model to make predictions. At the end EDA techniques that were used to characterize data qualities, but were not incorperated in feature selection.
+    
     To execute the PCA Analysis notebook the following files are required:
         'cleaned_2d_descriptors'
         Consist of:
