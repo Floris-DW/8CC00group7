@@ -17,6 +17,11 @@ from scikeras.wrappers import KerasClassifier
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential
 
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
+
 
 def train_model(x, y, model_type='RF', param_grid=None):
     #class_weights = compute_class_weight(class_weight="balanced", classes=np.array([0, 1]), y=y)
@@ -41,7 +46,7 @@ def train_model(x, y, model_type='RF', param_grid=None):
                           'solver': ['liblinear'],
                           'max_iter': [100000]}
     elif model_type == "NN":
-        input_dim = x.shape[0]
+        input_dim = x.shape[1]
         clf = KerasClassifier(build_fn=create_mlp_model,
                               input_dim=input_dim,
                               verbose=0,
@@ -140,10 +145,11 @@ if __name__ == '__main__':
     desc_mqn = pd.DataFrame(MinMaxScaler().fit_transform(desc_mqn),
                             columns=desc_mqn.columns)
     
-    desc_fprint_counts = pd.read_csv("data/cleaned_fprint_count.csv")
-    desc_fprint_counts = pd.DataFrame(MinMaxScaler().fit_transform(
-        desc_fprint_counts), columns=desc_fprint_counts.columns)
-    desc_merged = pd.concat([desc_2d, desc_fprint_counts, desc_maccs,
+    # desc_fprint_counts = pd.read_csv("data/cleaned_fprint_count.csv")
+    # desc_fprint_counts = pd.DataFrame(MinMaxScaler().fit_transform(
+    #     desc_fprint_counts), columns=desc_fprint_counts.columns)
+    
+    desc_merged = pd.concat([desc_2d, desc_fprint, desc_maccs,
                              desc_mqn], axis=1)
     # -----------------------------------------------------------------
     # CUSTOMIZE:
@@ -152,7 +158,7 @@ if __name__ == '__main__':
     merge = True  # Whether you want to merge descriptor types
     use_ind_test = False  # Whether you want to use independent test set
     use_k_fold = True  # Whether you want to use k-fold cross-validation
-    use_PCA = True
+    use_PCA = False
     m_type = "NN"  # model type: "RF" or "LR"
 
     r_state = 7  # Random state for an attempt at reproducibility of results
@@ -166,7 +172,8 @@ if __name__ == '__main__':
     # Quick fix needed with the "cleaned files" inclusion as this
     # program was originally written with the utils.py functions in mind
     if merge:
-        desc = [desc_merged]
+        # desc = [desc_merged]
+        desc=[desc_mqn]
     else:
         desc = [desc_2d, desc_fprint, desc_maccs, desc_mqn]
 
