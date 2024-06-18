@@ -158,14 +158,14 @@ if __name__ == '__main__':
     merge = True  # Whether you want to merge descriptor types
     use_ind_test = False  # Whether you want to use independent test set
     use_k_fold = True  # Whether you want to use k-fold cross-validation
-    use_PCA = False
-    m_type = "NN"  # model type: "RF" or "LR"
+    use_PCA = False  # Whether you want to use PCA descriptors
+    m_type = "NN"  # model type: "RF" or "LR" or "NN"
 
     r_state = 7  # Random state for an attempt at reproducibility of results
     test_size = 0.2  # Size of test set when not using k-fold
     ind_test_size = 0.2  # Size of independent test set (if use_ind_test and use_k_fold)
     # k-value for k-fold cross-validation:
-    n_splits = 2  # 10 is generally recommended but it takes a long time
+    n_splits = 4  # 10 is generally recommended but it takes a long time
     # customize hyperparameters: edit the param_grid in train_model()
     # -----------------------------------------------------------------
 
